@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Capture Video — NV-SYS{% endblock %}
+{% block content %}
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="{{ url_for('capture_video_exit') }}" class="btn btn-ghost" id="btn-back-capture-video">← BACK</a>
+    <h2>// CAPTURE VIDEO</h2>
+  </div>
+  <span class="topbar-operator">OPERATOR: {{ session.username }}</span>
+</div>
+
+<div class="page-body">
+  <div class="capture-card capture-split">
+    <div class="capture-stage">
+      <div class="viewfinder-panel">
+        {% if saved_filename %}
+          <div class="capture-result">{{ saved_filename }}</div>
+          <video controls class="capture-preview" id="video-playback">
+            <source src="{{ url_for('static', filename='captures/videos/' ~ saved_filename) }}" type="video/mp4">
+            Your browser does not support this video format.
+          </video>
+        {% else %}
+          <div class="viewfinder-placeholder">
+            <div class="viewfinder-overlay">
+              <div class="viewfinder-status">
+                <span class="status-pill">{{ 'REAL CAMERA' if camera_available else 'SIMULATED' }}</span>
+                <span class="status-pill status-pill-ghost">VIEWFINDER</span>
+              </div>
+              <div class="viewfinder-reticle"></div>
+              <div class="viewfinder-caption">
+                <strong>LIVE FEED</strong>
+                <span>Hardware preview overlay ready</span>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="capture-controls">
+        <div class="capture-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" style="vertical-align:middle; margin-right:8px;">
+            <rect x="3" y="6" width="12" height="12" rx="2"/>
+            <path d="M15 10l6-3v10l-6-3z"/>
+          </svg>
+          Video Recording
+        </div>
+
+        {% if saved_filename %}
+          <div class="capture-actions">
+            <a href="{{ url_for('capture_video_page') }}" class="btn btn-primary btn-large" id="btn-record-again">
+              RECORD AGAIN
+            </a>
+            <a href="{{ url_for('gallery_videos') }}" class="btn btn-ghost btn-large" id="btn-view-video-gallery">
+              VIEW GALLERY
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-ghost btn-large" id="btn-menu-from-video">
+              BACK TO MENU
+            </a>
+          </div>
+        {% else %}
+          <p style="font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--ink-dim);
+                    letter-spacing:0.08em; line-height:1.7;">
+            Press START to begin recording. Press STOP to end the session
+            and save the footage automatically.
+          </p>
+
+          <div id="status-idle" class="capture-actions">
+            <button id="btn-start" class="btn btn-primary btn-large" onclick="startRec()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <circle cx="12" cy="12" r="8"/>
+              </svg>
+              START RECORDING
+            </button>
+          </div>
+
+          <div id="status-recording" style="display:none;" class="capture-actions">
+            <div class="rec-badge" style="justify-content:center;">
+              <span class="rec-dot"></span> REC
+            </div>
+            <div class="timer-display" id="timer">00:00</div>
+            <button id="btn-stop" class="btn btn-danger btn-large" onclick="stopRec()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <rect x="4" y="4" width="16" height="16" rx="2"/>
+              </svg>
+              STOP RECORDING
+            </button>
+          </div>
+
+          <a href="{{ url_for('capture_video_exit') }}" class="btn btn-accent btn-large" id="btn-quit-feed">
+            QUIT FEED
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let timerInterval = null;
+  let seconds = 0;
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function tickTimer() {
+    seconds++;
+    document.getElementById('timer').textContent =
+      pad(Math.floor(seconds / 60)) + ':' + pad(seconds % 60);
+  }
+
+  function startRec() {
+    fetch("{{ url_for('capture_video_start') }}", { method: 'POST' })
+      .then(() => {
+        document.getElementById('status-idle').style.display = 'none';
+        document.getElementById('status-recording').style.display = 'block';
+        seconds = 0;
+        timerInterval = setInterval(tickTimer, 1000);
+      });
+  }
+
+  function stopRec() {
+    clearInterval(timerInterval);
+    document.getElementById('btn-stop').disabled = true;
+    document.getElementById('btn-stop').textContent = 'SAVING…';
+
+    fetch("{{ url_for('capture_video_stop') }}", { method: 'POST' })
+      .then(r => r.json())
+      .then(data => {
+        window.location.href = "{{ url_for('capture_video_page') }}?saved=" + data.filename;
+      });
+  }
+</script>
+
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Mission Briefing — NV-SYS{% endblock %}
+{% block content %}
+<div class="center-screen">
+  <div class="briefing-card">
+
+    <div class="briefing-header">
+      <div class="tag">// CLASSIFIED — OPERATOR BRIEFING //</div>
+      <h1>Operating Instructions</h1>
+    </div>
+
+    <ul class="briefing-steps">
+      <li>
+        <div class="step-num">01</div>
+        <div class="step-text">
+          <strong>Capture Image</strong> — Point the rifle-mounted NoIR camera at the
+          target area and tap Capture Image. The system will acquire and save a
+          timestamped JPEG automatically.
+        </div>
+      </li>
+      <li>
+        <div class="step-num">02</div>
+        <div class="step-text">
+          <strong>Capture Video</strong> — Tap Start Recording to begin. Tap Stop
+          Recording when done. The footage is saved as an MP4 with a timestamp filename.
+        </div>
+      </li>
+      <li>
+        <div class="step-num">03</div>
+        <div class="step-text">
+          <strong>View Images / Videos</strong> — Browse all saved captures from the
+          Saved Images and Saved Videos tiles on the main menu. Individual files can be
+          deleted from within the gallery.
+        </div>
+      </li>
+      <li>
+        <div class="step-num">04</div>
+        <div class="step-text">
+          <strong>Change PIN</strong> — Change your 4-digit access PIN at any time.
+          You will need your current PIN to confirm the change.
+        </div>
+      </li>
+      <li>
+        <div class="step-num">05</div>
+        <div class="step-text">
+          <strong>Settings</strong> — View system status, camera health, and available
+          storage on the device.
+        </div>
+      </li>
+    </ul>
+
+    <div class="briefing-warning">
+      Do not power off the device while recording is in progress.
+      Always tap Stop Recording before shutting down.
+    </div>
+
+    <form method="POST">
+      <button type="submit" class="btn btn-primary btn-large">
+        ACKNOWLEDGED — PROCEED TO MENU
+      </button>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

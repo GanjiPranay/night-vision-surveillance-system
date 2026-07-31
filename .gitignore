@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.log
+venv/
+.venv/
+.env
+instance/
+database.db
+static/captures/images/*
+static/captures/videos/*

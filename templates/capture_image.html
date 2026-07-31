@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Capture Image — NV-SYS{% endblock %}
+{% block content %}
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="{{ url_for('capture_image_exit') }}" class="btn btn-ghost" id="btn-back-capture-image">← BACK</a>
+    <h2>// CAPTURE IMAGE</h2>
+  </div>
+  <span class="topbar-operator">OPERATOR: {{ session.username }}</span>
+</div>
+
+<div class="page-body">
+  <div class="capture-card capture-split">
+    <div class="capture-stage">
+      <div class="viewfinder-panel">
+        {% if saved_filename %}
+          <div class="capture-result">{{ saved_filename }}</div>
+          <img src="{{ url_for('static', filename='captures/images/' ~ saved_filename) }}"
+               alt="Captured image"
+               class="capture-preview"
+               id="captured-image">
+        {% else %}
+          <div class="viewfinder-placeholder">
+            <div class="viewfinder-overlay">
+              <div class="viewfinder-status">
+                <span class="status-pill">{{ 'REAL CAMERA' if camera_available else 'SIMULATED' }}</span>
+                <span class="status-pill status-pill-ghost">VIEWFINDER</span>
+              </div>
+              <div class="viewfinder-reticle"></div>
+              <div class="viewfinder-caption">
+                <strong>LIVE FEED</strong>
+                <span>Hardware preview overlay ready</span>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="capture-controls">
+        <div class="capture-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" style="vertical-align:middle; margin-right:8px;">
+            <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+            <circle cx="12" cy="13" r="3.5"/>
+          </svg>
+          Image Acquisition
+        </div>
+
+        {% if saved_filename %}
+          <div class="capture-actions">
+            <form method="POST">
+              <button type="submit" class="btn btn-primary btn-large" id="btn-capture-again">
+                CAPTURE ANOTHER
+              </button>
+            </form>
+            <a href="{{ url_for('gallery_images') }}" class="btn btn-ghost btn-large" id="btn-view-gallery-image">
+              VIEW GALLERY
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-ghost btn-large" id="btn-menu-from-capture">
+              BACK TO MENU
+            </a>
+          </div>
+        {% else %}
+          <p style="font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--ink-dim);
+                    letter-spacing:0.08em; line-height:1.7;">
+            The NoIR camera will acquire an image and save it automatically.<br>
+            Ensure the target area is in frame before proceeding.
+          </p>
+          <div class="capture-actions">
+            <form method="POST">
+              <button type="submit" class="btn btn-primary btn-large" id="btn-capture-image">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round">
+                  <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+                  <circle cx="12" cy="13" r="3.5"/>
+                </svg>
+                CAPTURE IMAGE
+              </button>
+            </form>
+            <a href="{{ url_for('capture_image_exit') }}" class="btn btn-accent btn-large" id="btn-cancel-capture-image">
+              QUIT FEED
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

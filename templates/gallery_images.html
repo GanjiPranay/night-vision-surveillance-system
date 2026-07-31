@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Image Gallery — NV-SYS{% endblock %}
+{% block content %}
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-ghost" id="btn-back-gallery-images">← BACK</a>
+    <h2>// SAVED IMAGES</h2>
+  </div>
+  <span class="topbar-operator">{{ images|length }} FILE(S)</span>
+</div>
+
+<div class="page-body">
+  {% if images %}
+    <div class="gallery-grid">
+      {% for img in images %}
+        <div class="gallery-item" id="img-{{ loop.index }}">
+          <a href="{{ url_for('static', filename='captures/images/' ~ img) }}" target="_blank">
+            <img src="{{ url_for('static', filename='captures/images/' ~ img) }}"
+                 alt="{{ img }}" loading="lazy">
+          </a>
+          <div class="gallery-meta">
+            <span class="fname">{{ img }}</span>
+            <form method="POST"
+                  action="{{ url_for('delete_image_route', filename=img) }}"
+                  onsubmit="return confirm('Delete {{ img }}?')">
+              <button type="submit" class="btn-del" title="Delete" id="del-img-{{ loop.index }}">✕</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="3" y="4" width="18" height="16" rx="2"/>
+        <circle cx="8.5" cy="9.5" r="1.5"/>
+        <path d="M21 16l-5.5-5.5L9 17"/>
+      </svg>
+      <p>NO IMAGES CAPTURED YET</p>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

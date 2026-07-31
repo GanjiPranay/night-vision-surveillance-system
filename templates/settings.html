@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Settings — NV-SYS{% endblock %}
+{% block content %}
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="{{ url_for('dashboard') }}" class="btn btn-ghost" id="btn-back-settings">← BACK</a>
+    <h2>// SYSTEM SETTINGS</h2>
+  </div>
+  <span class="status-dot"></span>
+</div>
+
+<div class="center-screen">
+  <div class="form-card" style="max-width:540px;">
+    <div class="form-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" style="vertical-align:middle; margin-right:8px;">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06
+                 a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.09
+                 A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83
+                 l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4
+                 h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1
+                 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0
+                 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0
+                 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.56 1.04H21
+                 a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15z"/>
+      </svg>
+      System Status
+    </div>
+
+    <div class="stat-table">
+
+      <div class="stat-row">
+        <span class="stat-label">Camera Module</span>
+        {% if stats.camera_available %}
+          <span class="stat-value ok">ONLINE</span>
+        {% else %}
+          <span class="stat-value warn">SIMULATION MODE</span>
+        {% endif %}
+      </div>
+
+      <div class="stat-row">
+        <span class="stat-label">Saved Images</span>
+        <span class="stat-value">{{ stats.image_count }} FILE(S)</span>
+      </div>
+
+      <div class="stat-row">
+        <span class="stat-label">Saved Videos</span>
+        <span class="stat-value">{{ stats.video_count }} FILE(S)</span>
+      </div>
+
+      <div class="stat-row">
+        <span class="stat-label">Storage Used</span>
+        <span class="stat-value">
+          {{ (stats.total_gb - stats.free_gb) | round(1) }} GB
+          / {{ stats.total_gb }} GB
+        </span>
+      </div>
+
+      <div class="stat-row">
+        <span class="stat-label">Free Storage</span>
+        {% if stats.free_gb < 2 %}
+          <span class="stat-value warn">{{ stats.free_gb }} GB — LOW</span>
+        {% else %}
+          <span class="stat-value ok">{{ stats.free_gb }} GB</span>
+        {% endif %}
+      </div>
+
+      <div class="stat-row">
+        <span class="stat-label">Logged-in Operator</span>
+        <span class="stat-value">{{ session.username }}</span>
+      </div>
+
+    </div>
+
+    <div style="margin-top:28px;">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-ghost btn-large" id="btn-settings-menu">
+        BACK TO MENU
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
