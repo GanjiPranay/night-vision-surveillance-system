@@ -21,11 +21,37 @@ from datetime import datetime
 from typing import Any, Optional
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_DIR = os.path.join(BASE_DIR, "static", "captures", "images")
-VIDEO_DIR = os.path.join(BASE_DIR, "static", "captures", "videos")
+
+# >>> CHANGED ---------------------------------------------------------------
+# ORIGINAL CODE:
+#     IMAGE_DIR = os.path.join(BASE_DIR, "static", "captures", "images")
+#     VIDEO_DIR = os.path.join(BASE_DIR, "static", "captures", "videos")
+#
+# WHY: camera.py SAVES into the folder sitting next to camera.py, but the
+# templates told the browser to fetch /static/captures/images/... which Flask
+# RESOLVES next to app.py. Two paths, computed in two different files, with
+# nothing tying them together. The moment they point at different folders the
+# file is on disk but every URL 404s -> broken preview + empty gallery.
+# Now one shared root feeds the writer AND the reader, so "where the camera
+# saves" and "what the browser reads" can never drift apart. Override it on
+# the Pi with:  NV_CAPTURE_ROOT=/some/folder python app.py
+CAPTURE_ROOT = os.environ.get(
+    "NV_CAPTURE_ROOT", os.path.join(BASE_DIR, "static", "captures")
+)
+IMAGE_DIR = os.path.join(CAPTURE_ROOT, "images")
+VIDEO_DIR = os.path.join(CAPTURE_ROOT, "videos")
+# >>> END CHANGED -----------------------------------------------------------
 
 os.makedirs(IMAGE_DIR, exist_ok=True)
 os.makedirs(VIDEO_DIR, exist_ok=True)
+
+# >>> CHANGED ---------------------------------------------------------------
+# The two print() lines are NEW (original had nothing here). WHY: seeing the
+# resolved folder in the terminal turns a silent path mismatch into a fact you
+# can compare against the folder you open in the file manager.
+print(f"[NV-SYS] image folder : {IMAGE_DIR}")
+print(f"[NV-SYS] video folder : {VIDEO_DIR}")
+# >>> END CHANGED -----------------------------------------------------------
 
 CAMERA_AVAILABLE = shutil.which("rpicam-still") is not None
 FFMPEG_AVAILABLE = shutil.which("ffmpeg") is not None
@@ -43,7 +69,16 @@ _preview_process: Optional[subprocess.Popen[Any]] = None
 
 
 def _timestamp():
-    return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    # >>> CHANGED -----------------------------------------------------------
+    # ORIGINAL CODE:
+    #     return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    #
+    # WHY: second-resolution names meant two captures inside the same second
+    # produced the SAME filename - the second silently overwrote the first, and
+    # the browser (having already cached that URL, including a failed load)
+    # could keep showing a stale result. Microseconds make every name unique.
+    return datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")
+    # >>> END CHANGED -------------------------------------------------------
 
 
 def start_preview(mode="still"):
@@ -168,10 +203,26 @@ def stop_recording():
 
 
 def list_images():
-    files = [
-        f for f in os.listdir(IMAGE_DIR)
-        if f.lower().endswith((".jpg", ".jpeg", ".png"))
-    ]
+    files = []
+    for filename in os.listdir(IMAGE_DIR):
+        path = os.path.join(IMAGE_DIR, filename)
+        if not os.path.isfile(path):
+            continue
+
+        # New captures normally have .jpg/.jpeg/.png. Older captures on the
+        # Pi have no extension, so check their first bytes as a fallback.
+        if filename.lower().endswith((".jpg", ".jpeg", ".png")):
+            files.append(filename)
+            continue
+
+        try:
+            with open(path, "rb") as image_file:
+                header = image_file.read(8)
+            if header.startswith(b"\xff\xd8\xff") or header == b"\x89PNG\r\n\x1a\n":
+                files.append(filename)
+        except OSError:
+            continue
+
     files.sort(reverse=True)  # newest first
     return files
 
@@ -268,4 +319,3 @@ def _make_placeholder_video(filepath, duration_seconds):
     # Fallback if ffmpeg is missing or failed
     time.sleep(min(duration_seconds, 2))
     open(filepath, "wb").close()
-

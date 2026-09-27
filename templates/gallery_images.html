@@ -15,8 +15,8 @@
     <div class="gallery-grid">
       {% for img in images %}
         <div class="gallery-item" id="img-{{ loop.index }}">
-          <a href="{{ url_for('static', filename='captures/images/' ~ img) }}" target="_blank">
-            <img src="{{ url_for('static', filename='captures/images/' ~ img) }}"
+          <a href="{{ url_for('media_image', filename=img) }}" target="_blank">
+            <img src="{{ url_for('media_image', filename=img) }}"
                  alt="{{ img }}" loading="lazy">
           </a>
           <div class="gallery-meta">

@@ -10,7 +10,25 @@ will do this automatically - see README.md).
 """
 
 import functools
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+import os
+import subprocess
+import threading
+import time
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+    send_from_directory,  # >>> CHANGED - NEW import for the media routes below
+    send_file,
+    abort,
+)
+# >>> CHANGED: the ORIGINAL import line was - and had no send_from_directory:
+#     from flask import Flask, render_template, request, redirect, url_for, session, flash
+# >>> END CHANGED
 
 import auth
 import camera
@@ -140,6 +158,50 @@ def capture_video_exit():
 
 
 
+# ---------------------------------------------------------------------------
+# >>> CHANGED - THESE TWO ROUTES ARE COMPLETELY NEW. Nothing was removed:
+# the original app.py had no /media/... routes at all.
+#
+# WHAT THE TEMPLATES USED TO ASK FOR (the original, un-patched URLs):
+#     url_for('static', filename='captures/images/' ~ saved_filename)
+#     url_for('static', filename='captures/images/' ~ img)
+#     url_for('static', filename='captures/videos/' ~ saved_filename)
+#     url_for('static', filename='captures/videos/' ~ vid)
+#
+# WHY THE CHANGE: Flask's /static/... route serves "<folder of app.py>/static",
+# while camera.py writes into "<folder of camera.py>/static/captures/...".
+# Those are the same directory only by coincidence - and when they differ, the
+# file really is on disk but every URL returns 404 (broken preview rectangle
+# plus an empty gallery). send_from_directory(camera.IMAGE_DIR, ...) can never
+# drift, because it is the exact same variable that was used to write the file.
+# ---------------------------------------------------------------------------
+@app.route("/media/images/<path:filename>")
+@login_required
+def media_image(filename):
+    # Some older Pi captures have no .jpg extension. Send those files with
+    # an explicit image type so the browser can display them correctly.
+    path = os.path.join(camera.IMAGE_DIR, filename)
+    if not os.path.isfile(path) or os.path.commonpath(
+        [os.path.realpath(path), os.path.realpath(camera.IMAGE_DIR)]
+    ) != os.path.realpath(camera.IMAGE_DIR):
+        abort(404)
+
+    mimetype = "image/jpeg"
+    try:
+        with open(path, "rb") as image_file:
+            if image_file.read(8) == b"\x89PNG\r\n\x1a\n":
+                mimetype = "image/png"
+    except OSError:
+        abort(404)
+    return send_file(path, mimetype=mimetype, conditional=True)
+
+
+@app.route("/media/videos/<path:filename>")
+@login_required
+def media_video(filename):
+    return send_from_directory(camera.VIDEO_DIR, filename, conditional=True)
+
+
 @app.route("/gallery/images")
 @login_required
 def gallery_images():
@@ -190,10 +252,41 @@ def change_password_page():
 @login_required
 def settings_page():
     stats = camera.storage_summary()
+    # >>> CHANGED -----------------------------------------------------------
+    # ORIGINAL CODE:
+    #     stats = camera.storage_summary()
+    #     return render_template("settings.html", stats=stats)
+    #
+    # WHY: these two extra keys let the Settings page print the real folders
+    # this running server writes to and serves from, so you can compare them
+    # against the folder you open in the file manager.
+    stats["image_dir"] = camera.IMAGE_DIR
+    stats["video_dir"] = camera.VIDEO_DIR
+    # >>> END CHANGED -------------------------------------------------------
     return render_template("settings.html", stats=stats)
 
 
+def _open_browser():
+    """Wait for Flask to start, then launch Chromium pointing at the app."""
+    time.sleep(1.5)
+    # Try both common Chromium binary names on Raspberry Pi OS
+    for binary in ("chromium-browser", "chromium"):
+        try:
+            subprocess.Popen(
+                [binary, "--start-fullscreen", "http://127.0.0.1:5000"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            break  # Stop after the first one that works
+        except FileNotFoundError:
+            continue  # Try the next binary name
+
+
 if __name__ == "__main__":
+    # Launch Chromium automatically in a background thread so you don't
+    # have to click the URL in the terminal manually.
+    #threading.Thread(target=_open_browser, daemon=True).start()
+
     # host="0.0.0.0" lets you open the app from another device on the
     # same network too (useful for testing from your phone/laptop while
     # the Flask server runs on the Pi).
