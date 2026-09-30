@@ -245,9 +245,37 @@ body::after {
   border-color: var(--border);
   color: var(--ink-dim);
 }
-.btn-outline:hover {
+.btn-ghost:hover {
   border-color: var(--phosphor-dark);
   color: var(--phosphor);
+}
+
+.preview-toggle {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px 0 4px;
+}
+
+.preview-mode-button {
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.preview-mode-button.is-active {
+  background: var(--phosphor);
+  border-color: var(--phosphor-dim);
+  color: var(--bg);
+}
+
+.preview-mode-message {
+  min-height: 20px;
+  margin: 4px 0 8px;
+  color: var(--phosphor);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
 }
 
 .btn-ghost {

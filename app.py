@@ -22,6 +22,7 @@ from flask import (
     url_for,
     session,
     flash,
+    jsonify,
     send_from_directory,  # >>> CHANGED - NEW import for the media routes below
     send_file,
     abort,
@@ -31,7 +32,12 @@ from flask import (
 # >>> END CHANGED
 
 import auth
-import camera
+import nirdet_service
+import camera_v2 as camera
+import time 
+from flask import Response 
+
+detector = nirdet_service.NIRPersonDetectorService(camera)
 
 app = Flask(__name__)
 
@@ -73,6 +79,7 @@ def login():
 
 @app.route("/logout")
 def logout():
+    detector.stop()
     camera.stop_preview()
     session.clear()
     return redirect(url_for("login"))
@@ -90,8 +97,57 @@ def manual():
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    detector.stop()
     camera.stop_preview()
     return render_template("dashboard.html")
+    
+    
+@app.route("/detect")
+@login_required
+def detect_page():
+    ok = detector.start()
+    return render_template(
+        "detect.html",
+        detector_ok=ok,
+        detector_error=detector.error or "",
+    )
+
+
+@app.route("/detect_feed")
+@login_required
+def detect_feed():
+    def generate():
+        idle_since = None
+        while True:
+            frame = detector.get_latest_jpeg()
+            if frame is None:
+                idle_since = idle_since or time.time()
+                if time.time() - idle_since > 5:
+                    return
+                time.sleep(0.1)
+                continue
+            idle_since = None
+            # MJPEG requires real CRLF bytes between each part.  Escaping the
+            # backslashes in a bytes literal produces the text "\\r\\n",
+            # which browsers cannot parse as a multipart boundary.
+            yield (b"--frame\r\n"
+                   b"Content-Type: image/jpeg\r\n"
+                   b"Content-Length: " + str(len(frame)).encode("ascii")
+                   + b"\r\n\r\n" + frame + b"\r\n")
+            time.sleep(0.03)
+    return Response(
+        generate(),
+        mimetype="multipart/x-mixed-replace; boundary=frame",
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
+    )
+
+
+@app.route("/detect_exit")
+@login_required
+def detect_exit():
+    detector.stop()
+    return redirect(url_for("dashboard"))
+
 
 
 @app.route("/capture/image", methods=["GET", "POST"])
@@ -110,9 +166,51 @@ def capture_image_page():
     )
 
 
+@app.route("/capture/preview_mode", methods=["POST"])
+@login_required
+def capture_preview_mode():
+    """Switch the in-page preview between normal camera and AI mode."""
+    mode = request.form.get("mode", "normal").strip().lower()
+    capture_kind = request.form.get("capture_kind", "image").strip().lower()
+    if mode not in {"normal", "ai"} or capture_kind not in {"image", "video"}:
+        return jsonify(ok=False, error="Invalid preview mode."), 400
+
+    try:
+        if mode == "ai":
+            camera.stop_preview()
+            ok = detector.start()
+            if not ok:
+                camera.start_preview(capture_kind)
+                return jsonify(
+                    ok=False,
+                    mode="normal",
+                    error=detector.error or "AI detector could not start.",
+                ), 503
+        else:
+            detector.stop()
+            camera.start_preview(capture_kind)
+
+        return jsonify(ok=True, mode=mode)
+    except Exception as exc:
+        # Never send an HTML 500 page to the toggle's fetch() request.
+        # Try to leave the user with a working normal preview.
+        print(f"[preview-mode] switch failed: {type(exc).__name__}: {exc}", flush=True)
+        try:
+            detector.stop()
+            camera.start_preview(capture_kind)
+        except Exception as recovery_exc:
+            print(f"[preview-mode] recovery failed: {recovery_exc}", flush=True)
+        return jsonify(
+            ok=False,
+            mode="normal",
+            error=f"Preview switch failed: {type(exc).__name__}: {exc}",
+        ), 500
+
+
 @app.route("/capture/image/exit")
 @login_required
 def capture_image_exit():
+    detector.stop()
     camera.stop_preview()
     return redirect(url_for("dashboard"))
 
@@ -153,9 +251,27 @@ def capture_video_exit():
         # Cleanly stop and auto-save the video in progress
         camera.stop_recording()
     else:
+        detector.stop()
         camera.stop_preview()
     return redirect(url_for("dashboard"))
 
+@app.route("/video_feed")
+@login_required
+def video_feed():
+    def generate():
+        idle_since = None
+        while True:
+            frame = camera.get_frame_jpeg()
+            if frame is None:
+                idle_since = idle_since or time.time()
+                if time.time() - idle_since > 5:
+                    return
+                time.sleep(0.1)
+                continue
+            idle_since = None
+            yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
+            time.sleep(0.05)
+    return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
 # ---------------------------------------------------------------------------

@@ -22,18 +22,9 @@
                id="captured-image">
         {% else %}
           <div class="viewfinder-placeholder">
-            <div class="viewfinder-overlay">
-              <div class="viewfinder-status">
-                <span class="status-pill">{{ 'REAL CAMERA' if camera_available else 'SIMULATED' }}</span>
-                <span class="status-pill status-pill-ghost">VIEWFINDER</span>
-              </div>
-              <div class="viewfinder-reticle"></div>
-              <div class="viewfinder-caption">
-                <strong>LIVE FEED</strong>
-                <span>Hardware preview overlay ready</span>
-              </div>
-            </div>
+            <img id="capture-preview-feed" src="{{ url_for('video_feed') }}" alt="Live feed" style="width:100%;height:100%;object-fit:contain;">
           </div>
+
         {% endif %}
       </div>
 
@@ -67,6 +58,11 @@
             The NoIR camera will acquire an image and save it automatically.<br>
             Ensure the target area is in frame before proceeding.
           </p>
+          <div class="preview-toggle" role="group" aria-label="Preview type">
+            <button type="button" class="btn btn-toggle preview-mode-button is-active" data-mode="normal">NORMAL PREVIEW</button>
+            <button type="button" class="btn btn-toggle preview-mode-button" data-mode="ai">AI PREVIEW</button>
+          </div>
+          <div id="preview-mode-message" class="preview-mode-message" aria-live="polite"></div>
           <div class="capture-actions">
             <form method="POST">
               <button type="submit" class="btn btn-primary btn-large" id="btn-capture-image">
@@ -87,5 +83,53 @@
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    const feed = document.getElementById('capture-preview-feed');
+    const message = document.getElementById('preview-mode-message');
+    const buttons = document.querySelectorAll('.preview-mode-button');
+    if (!feed || !buttons.length) return;
+
+    buttons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        const mode = button.dataset.mode;
+        buttons.forEach(function (item) { item.disabled = true; });
+        message.textContent = 'SWITCHING...';
+        const body = new URLSearchParams({ mode: mode, capture_kind: 'image' });
+        fetch('{{ url_for("capture_preview_mode") }}', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body
+        }).then(function (response) {
+          return response.text().then(function (text) {
+            let result;
+            try { result = JSON.parse(text); }
+            catch (error) {
+              throw new Error('Server returned HTTP ' + response.status + ', not JSON.');
+            }
+            if (!response.ok) throw new Error(result.error || ('HTTP ' + response.status));
+            return result;
+          });
+        })
+          .then(function (result) {
+            if (!result.ok) throw new Error(result.error || 'Preview switch failed.');
+            feed.src = mode === 'ai'
+              ? '{{ url_for("detect_feed") }}?source=capture'
+              : '{{ url_for("video_feed") }}?source=capture';
+            buttons.forEach(function (item) {
+              item.classList.toggle('is-active', item.dataset.mode === mode);
+            });
+            message.textContent = mode === 'ai' ? 'AI PREVIEW ACTIVE' : 'NORMAL PREVIEW ACTIVE';
+          })
+          .catch(function (error) { message.textContent = error.message; })
+          .finally(function () {
+            buttons.forEach(function (item) { item.disabled = false; });
+          });
+      });
+    });
+  }());
+</script>
 
 {% endblock %}

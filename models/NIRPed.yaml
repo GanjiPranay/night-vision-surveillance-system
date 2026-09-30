@@ -1,0 +1,123 @@
+name: val
+root: C:\projects\nightvision\val
+img_h: 288
+img_w: 512
+strides:
+- 8
+- 16
+- 32
+canvas_fingerprint: dc41a3b2d36a43be7b9937c4f64c06c4d45c2f1c5fea961b9056945a1831b53a
+label_sha256: 66e91fe8b6f5013340f25f072a6e777c111863717455682b968f6f063a16e6af
+image_geometry_fingerprint: 21d890482b9f8dca6a17847d6b938351ef4ae6a60a38982266d9bd05a3ca1196
+n_train: 5218
+n_val: 2066
+n_test: 2061
+n_train_boxes: 20710
+n_val_boxes: 5984
+n_test_boxes: 6140
+prior_w: 0.053125
+prior_h: 0.238889
+deploy_score_thresh: 0.43
+baseline_map50: null
+baseline_source: ''
+flat_field_path: null
+clahe_enabled: true
+clahe_clip: 2.0
+clahe_grid: 8
+splits:
+  train:
+    n_images: 5218
+    n_boxes: 20710
+    n_boxes_dropped_subpixel: 0
+    boxes_per_image_mean: 3.969
+    boxes_per_image_std: 1.5213
+    boxes_per_image_max: 10
+    n_images_empty: 71
+    w_pct:
+      p5: 0.024219
+      p25: 0.038281
+      p50: 0.053125
+      p75: 0.077344
+      p95: 0.1375
+    h_pct:
+      p5: 0.115278
+      p25: 0.172222
+      p50: 0.238889
+      p75: 0.361111
+      p95: 0.659722
+    ar_pct:
+      p5: 1.977901
+      p25: 2.333328
+      p50: 2.600019
+      p75: 2.870289
+      p95: 3.351193
+    n_small: 5594
+    n_medium: 13314
+    n_large: 1802
+    median_w: 0.053125
+    median_h: 0.238889
+    zero_pad_fraction: 1.0
+  val:
+    n_images: 2066
+    n_boxes: 5984
+    n_boxes_dropped_subpixel: 0
+    boxes_per_image_mean: 2.8964
+    boxes_per_image_std: 1.9507
+    boxes_per_image_max: 8
+    n_images_empty: 188
+    w_pct:
+      p5: 0.024219
+      p25: 0.030469
+      p50: 0.0375
+      p75: 0.05
+      p95: 0.08125
+    h_pct:
+      p5: 0.101389
+      p25: 0.141667
+      p50: 0.1625
+      p75: 0.218056
+      p95: 0.348611
+    ar_pct:
+      p5: 1.846516
+      p25: 2.302205
+      p50: 2.575008
+      p75: 2.799972
+      p95: 3.226234
+    n_small: 3350
+    n_medium: 2591
+    n_large: 43
+    median_w: 0.0375
+    median_h: 0.1625
+    zero_pad_fraction: 1.0
+  test:
+    n_images: 2061
+    n_boxes: 6140
+    n_boxes_dropped_subpixel: 0
+    boxes_per_image_mean: 2.9791
+    boxes_per_image_std: 1.9059
+    boxes_per_image_max: 9
+    n_images_empty: 184
+    w_pct:
+      p5: 0.022656
+      p25: 0.027344
+      p50: 0.034375
+      p75: 0.04375
+      p95: 0.075039
+    h_pct:
+      p5: 0.102778
+      p25: 0.125
+      p50: 0.151389
+      p75: 0.193056
+      p95: 0.388889
+    ar_pct:
+      p5: 1.852974
+      p25: 2.299943
+      p50: 2.561321
+      p75: 2.812762
+      p95: 3.250003
+    n_small: 4113
+    n_medium: 2022
+    n_large: 5
+    median_w: 0.034375
+    median_h: 0.151389
+    zero_pad_fraction: 1.0

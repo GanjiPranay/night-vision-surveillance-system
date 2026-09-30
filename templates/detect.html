@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Person Detection — NV-SYS{% endblock %}
+{% block content %}
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="{{ url_for('detect_exit') }}" class="btn btn-ghost" id="btn-back-detect">← BACK</a>
+    <h2>// PERSON DETECTION</h2>
+  </div>
+  <span class="topbar-operator">OPERATOR: {{ session.username }}</span>
+</div>
+
+<div class="page-body">
+  <div class="capture-card capture-split">
+    <div class="capture-stage">
+      <div class="viewfinder-panel">
+        {% if detector_ok %}
+          <div class="viewfinder-placeholder">
+            <img src="{{ url_for('detect_feed') }}" alt="Detection feed"
+                 style="width:100%;height:100%;object-fit:contain;">
+          </div>
+        {% else %}
+          <div class="viewfinder-placeholder">
+            <div class="banner error" style="margin:16px;">
+              DETECTION OFF<br>{{ detector_error }}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="capture-controls">
+        <div class="capture-title">Person Detection</div>
+        <p style="font-family:'Share Tech Mono',monospace; font-size:13px; color:var(--ink-dim);
+                  letter-spacing:0.08em; line-height:1.7;">
+          Green boxes mark confirmed persons.<br>
+          Situational awareness only.
+        </p>
+        <div class="capture-actions">
+          <a href="{{ url_for('detect_exit') }}" class="btn btn-accent btn-large" id="btn-quit-detect">
+            QUIT FEED
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
