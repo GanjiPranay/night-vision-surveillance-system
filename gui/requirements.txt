@@ -1,0 +1,13 @@
+# GUI-only dependencies for Night Vision Surveillance System Kiosk Shell
+# Target platform: Raspberry Pi 5 / Raspberry Pi OS Bookworm (64-bit)
+#
+# Recommended on Raspberry Pi OS Bookworm (system packages):
+#   sudo apt install -y python3-pyqt6 python3-pyqt6.qtwebengine
+#
+# Alternatively, install via pip in a virtual environment:
+PyQt6>=6.5.0
+PyQt6-WebEngine>=6.5.0
+
+
+# Phase 2 native kiosk dependencies (added during extraction; not in the original txt)
+PySide6>=6.5.0
